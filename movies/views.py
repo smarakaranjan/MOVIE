@@ -325,7 +325,9 @@ class GenreViewSet(ModelViewSet):
 
     allowed_query_params = [
         "movie",
+        "name",
         "actor",
+        "director",
         "page",
         "page_size",
         "ordering",
