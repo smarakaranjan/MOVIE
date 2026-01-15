@@ -1,6 +1,6 @@
 import random
 from django.core.management.base import BaseCommand
-from movies.models import Movie, Person, Genre, MovieActor, MovieDirector, MovieGenre
+from movies.models import Movie, Person, Genre, MovieActor, MovieGenre
 
 # ----------------------------
 # Predefined data
@@ -49,7 +49,7 @@ GENRE_NAMES = [
 # Command
 # ----------------------------
 class Command(BaseCommand):
-    help = "Populate 100 movies with random genres, actors, and directors"
+    help = "Populate movies with random genres, actors, and a single director"
 
     def handle(self, *args, **kwargs):
         self.stdout.write("Populating database with movies...")
@@ -73,12 +73,16 @@ class Command(BaseCommand):
             directors.append(director)
 
         # Create Movies
-        for i, title in enumerate(MOVIE_TITLES[:100], start=1):
+        for i, title in enumerate(MOVIE_TITLES, start=1):
             movie, created = Movie.objects.get_or_create(
                 title=title,
                 release_year=random.randint(1980, 2025),
                 rating=round(random.uniform(5.0, 9.5), 1)
             )
+
+            # Assign exactly 1 random director
+            movie.director = random.choice(directors)
+            movie.save()
 
             # Assign 1-3 random genres
             movie_genres = random.sample(genres, k=random.randint(1, 3))
@@ -90,11 +94,6 @@ class Command(BaseCommand):
             for actor in movie_actors:
                 MovieActor.objects.get_or_create(movie=movie, person=actor, character_name=f"Character {i}")
 
-            # Assign 1-2 random directors
-            movie_directors = random.sample(directors, k=random.randint(1, 2))
-            for director in movie_directors:
-                MovieDirector.objects.get_or_create(movie=movie, person=director)
+            self.stdout.write(f"Created movie: {movie.title} (Director: {movie.director.name})")
 
-            self.stdout.write(f"Created movie: {movie.title}")
-
-        self.stdout.write(self.style.SUCCESS("Successfully populated 100 movies!"))
+        self.stdout.write(self.style.SUCCESS("Successfully populated movies!"))

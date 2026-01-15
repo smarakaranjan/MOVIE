@@ -44,7 +44,7 @@ class Person(models.Model):
     - Both Actor and Director
 
     Role information is derived from relationship tables
-    (MovieActor, MovieDirector) instead of a fixed role field,
+    (MovieActor) instead of a fixed role field,
     allowing maximum flexibility and normalization.
     """
 
@@ -118,16 +118,18 @@ class Movie(models.Model):
 
     actors = models.ManyToManyField(
         Person,
+
         through="MovieActor",
         related_name="acted_movies",
         help_text="Actors who appeared in this movie"
     )
 
-    directors = models.ManyToManyField(
+    director = models.ForeignKey(
         Person,
-        through="MovieDirector",
+        on_delete=models.SET_NULL,
         related_name="directed_movies",
-        help_text="Directors who directed this movie"
+        null=True,
+        help_text="Director of the movie"
     )
 
     created_at = models.DateTimeField(
@@ -218,32 +220,4 @@ class MovieActor(models.Model):
         return f"{self.person} in {self.movie}"
 
 
-class MovieDirector(models.Model):
-    """
-    Junction table linking directors (persons) to movies.
-
-    Allows support for:
-    - Multiple directors per movie
-    - Directors who also act in other movies
-    """
-
-    movie = models.ForeignKey(
-        Movie,
-        on_delete=models.CASCADE,
-        help_text="Movie directed by the person"
-    )
-
-    person = models.ForeignKey(
-        Person,
-        on_delete=models.CASCADE,
-        help_text="Person who directed the movie"
-    )
-
-    class Meta:
-        unique_together = ("movie", "person")
-        indexes = [
-            models.Index(fields=["person", "movie"]),
-        ]
-
-    def __str__(self):
-        return f"{self.person} → Director of {self.movie}"
+ 

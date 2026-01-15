@@ -5,8 +5,7 @@ from .models import (
     Movie, 
     Person, 
     Genre, 
-    MovieActor, 
-    MovieDirector, 
+    MovieActor,  
     MovieGenre
 )
 
@@ -81,34 +80,6 @@ class MovieActorSerializer(serializers.ModelSerializer):
 
 
 # ============================================================
-# MovieDirector Serializer
-# ============================================================
-
-class MovieDirectorSerializer(serializers.ModelSerializer):
-    """
-    Serializer for the MovieDirector through table.
-
-    Represents the relationship between a movie and a director (Person).
-
-    Fields:
-        - id: Primary key of the MovieDirector record
-        - person: Nested person details (read-only)
-        - person_id: ID for assigning director when creating/updating
-    """
-    person = PersonSerializer(read_only=True)
-    person_id = serializers.PrimaryKeyRelatedField(
-        queryset=Person.objects.all(),
-        write_only=True,
-        source="person",
-        help_text="ID of the director to associate with this movie"
-    )
-
-    class Meta:
-        model = MovieDirector
-        fields = ["person", "person_id"]
-
-
-# ============================================================
 # MovieGenre Serializer
 # ============================================================
 
@@ -143,12 +114,12 @@ class MovieGenreSerializer(serializers.ModelSerializer):
 class MovieSerializer(serializers.ModelSerializer):
     # ---------- READ ----------
     actors_info = MovieActorSerializer(source="movieactor_set", many=True, read_only=True)
-    directors_info = MovieDirectorSerializer(source="moviedirector_set", many=True, read_only=True)
+    director_info = PersonSerializer(source="director", read_only=True)
     genres_info = MovieGenreSerializer(source="moviegenre_set", many=True, read_only=True)
 
     # ---------- WRITE ----------
     actors = MovieActorSerializer(source="movieactor_set", many=True, write_only=True, required=False)
-    directors = MovieDirectorSerializer(source="moviedirector_set", many=True, write_only=True, required=False)
+    director_id = serializers.PrimaryKeyRelatedField(queryset=Person.objects.all(), source="director", write_only=True)
     genres = MovieGenreSerializer(source="moviegenre_set", many=True, write_only=True, required=False)
 
     class Meta:
@@ -159,10 +130,11 @@ class MovieSerializer(serializers.ModelSerializer):
             "release_year",
             "rating",
             "actors_info",
-            "directors_info",
+            "director_info",
             "genres_info",
             "actors",
-            "directors",
+            "director_info",
+            "director_id",
             "genres",
             "created_at",
         ]
@@ -186,13 +158,11 @@ class MovieSerializer(serializers.ModelSerializer):
     # ---------- Create ----------
     def create(self, validated_data):
         actors_data = validated_data.pop("movieactor_set", [])
-        directors_data = validated_data.pop("moviedirector_set", [])
         genres_data = validated_data.pop("moviegenre_set", [])
 
         with transaction.atomic():
             movie = Movie.objects.create(**validated_data)
             self._update_m2m(movie, MovieActor, actors_data)
-            self._update_m2m(movie, MovieDirector, directors_data)
             self._update_m2m(movie, MovieGenre, genres_data)
 
         return movie
@@ -200,7 +170,6 @@ class MovieSerializer(serializers.ModelSerializer):
     # ---------- Update ----------
     def update(self, instance, validated_data):
         actors_data = validated_data.pop("movieactor_set", None)
-        directors_data = validated_data.pop("moviedirector_set", None)
         genres_data = validated_data.pop("moviegenre_set", None)
 
         with transaction.atomic():
@@ -211,7 +180,6 @@ class MovieSerializer(serializers.ModelSerializer):
 
             # Update nested relations
             self._update_m2m(instance, MovieActor, actors_data)
-            self._update_m2m(instance, MovieDirector, directors_data)
             self._update_m2m(instance, MovieGenre, genres_data)
 
         return instance

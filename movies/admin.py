@@ -8,7 +8,6 @@ from .models import (
     Person,
     Genre,
     MovieActor,
-    MovieDirector,
     MovieGenre,
 )
 
@@ -26,17 +25,6 @@ class MovieActorInline(admin.TabularInline):
     autocomplete_fields = ["person"]
     verbose_name = "Actor"
     verbose_name_plural = "Actors"
-
-
-class MovieDirectorInline(admin.TabularInline):
-    """
-    Inline to manage directors of a movie using the MovieDirector through table.
-    """
-    model = MovieDirector
-    extra = 1
-    autocomplete_fields = ["person"]
-    verbose_name = "Director"
-    verbose_name_plural = "Directors"
 
 
 class MovieGenreInline(admin.TabularInline):
@@ -61,16 +49,16 @@ class MovieAdmin(admin.ModelAdmin):
 
     Features:
     - Display title, release year, rating
-    - Search by title, actors, directors
+    - Search by title, actors, director
     - Filter by genres, release year
-    - Manage actors, directors, and genres inline
+    - Manage actors and genres inline
     """
-    list_display = ("title", "release_year", "rating")
-    search_fields = ("title", "actors__person__name", "directors__person__name")
+    list_display = ("title", "release_year", "rating", "director")
+    search_fields = ("title", "actors__person__name", "director__name")
     list_filter = ("release_year", "genres")
     ordering = ("-release_year", "title")
-    inlines = [MovieActorInline, MovieDirectorInline, MovieGenreInline]
-    autocomplete_fields = []
+    inlines = [MovieActorInline, MovieGenreInline]
+    autocomplete_fields = ["director"]  # Single director field
 
 
 # ============================================================
@@ -114,16 +102,6 @@ class MovieActorAdmin(admin.ModelAdmin):
     Allows managing actor–movie relationships with character names.
     """
     list_display = ("movie", "person", "character_name")
-    search_fields = ("movie__title", "person__name")
-    autocomplete_fields = ["movie", "person"]
-
-
-@admin.register(MovieDirector)
-class MovieDirectorAdmin(admin.ModelAdmin):
-    """
-    Admin interface for MovieDirector through table.
-    """
-    list_display = ("movie", "person")
     search_fields = ("movie__title", "person__name")
     autocomplete_fields = ["movie", "person"]
 

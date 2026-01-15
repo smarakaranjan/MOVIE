@@ -33,7 +33,7 @@ class MovieFilter(filters.FilterSet):
     )
 
     director = filters.CharFilter(
-        field_name="directors__name",
+        field_name="director__name",
         lookup_expr="icontains",
         help_text="Filter movies by director name (partial match)."
     )
@@ -120,6 +120,7 @@ class GenreFilter(filters.FilterSet):
     Supports filtering genres by:
     - Movie title
     - Actor name
+    - Director name
     """
 
     movie = filters.CharFilter(
@@ -130,6 +131,12 @@ class GenreFilter(filters.FilterSet):
 
     actor = filters.CharFilter(
         field_name="movies__actors__name",
+        lookup_expr="icontains",
+        help_text="Filter genres by actor name."
+    )
+
+    director = filters.CharFilter(
+        field_name="movies__director__name",
         lookup_expr="icontains",
         help_text="Filter genres by actor name."
     )

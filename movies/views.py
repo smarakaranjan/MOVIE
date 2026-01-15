@@ -56,7 +56,7 @@ class MovieViewSet(ModelViewSet):
         Movie.objects.prefetch_related(
             "genres",
             "actors",
-            "directors",
+            "director",
         )
         .distinct()
     )
@@ -67,14 +67,14 @@ class MovieViewSet(ModelViewSet):
     filterset_class = MovieFilter
     pagination_class = CustomPagination
 
-    ordering_fields = ["title", "release_year", "rating", "directors__name"]
+    ordering_fields = ["title", "release_year", "rating", "director__name"]
 
     ordering = ["title"]
 
     allowed_query_params = [
         "genre",
         "actor",
-        "directors",
+        "director",
         "release_year",
         "page",
         "page_size",
@@ -154,7 +154,7 @@ class ActorViewSet(ModelViewSet):
         acted_movies__isnull=False
     ).distinct().prefetch_related(
         "acted_movies__genres",
-        "acted_movies__directors",
+        "acted_movies__director",
     )
 
     serializer_class = PersonSerializer
@@ -312,7 +312,7 @@ class GenreViewSet(ModelViewSet):
     """
     queryset = Genre.objects.prefetch_related(
         "movies__actors",
-        "movies__directors",
+        "movies__director",
     )
 
     serializer_class = GenreSerializer
