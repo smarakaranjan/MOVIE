@@ -130,6 +130,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # REST CONFIG
 REST_FRAMEWORK = {
+    "EXCEPTION_HANDLER": "utils.exception.custom_exception_handler",
     "DEFAULT_PAGINATION_CLASS": "utils.pagination.CustomPagination",
     "PAGE_SIZE": 10,
     "DEFAULT_FILTER_BACKENDS": [
