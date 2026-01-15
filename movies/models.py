@@ -1,25 +1,24 @@
 from django.db import models
- 
+
+
+# ============================================================
+# Genre
+# ============================================================
 
 class Genre(models.Model):
     """
-        Represents a movie genre category such as Action, Drama, or Comedy.
+    Represents a movie genre such as Action, Drama, Comedy, or Thriller.
 
-        This model is used to classify movies into one or more categories.
-        Genres are shared across multiple movies and are
-        optimized for fast lookup and filtering.
-
-        Relationships:
-            - Many-to-Many with Movie (via MovieGenre)
-
-        Performance:
-            - Indexed on `name` for fast genre-based filtering.
+    Genres are shared reference data used to classify movies.
+    A movie can belong to multiple genres, and a genre can be
+    associated with multiple movies.
     """
+
     name = models.CharField(
         max_length=100,
         unique=True,
         db_index=True,
-        help_text="Name of the movie genre (e.g., Action, Drama)"
+        help_text="Unique genre name (e.g., Action, Drama, Comedy)"
     )
 
     class Meta:
@@ -30,33 +29,40 @@ class Genre(models.Model):
     def __str__(self):
         return self.name
 
-class Actor(models.Model):
+
+# ============================================================
+# Person
+# ============================================================
+
+class Person(models.Model):
     """
-        Represents an actor who has appeared in one or more movies.
+    Represents a person involved in movie production.
 
-        Stores basic biographical information about actors and maintains
-        a many-to-many relationship with movies through an explicit
-        junction table.
+    A single person can perform multiple roles such as:
+    - Actor
+    - Director
+    - Both Actor and Director
 
-        Relationships:
-            - Many-to-Many with Movie (via MovieActor)
-
-        Performance:
-            - Indexed on `name` to support fast search and filtering.
+    Role information is derived from relationship tables
+    (MovieActor, MovieDirector) instead of a fixed role field,
+    allowing maximum flexibility and normalization.
     """
+
     name = models.CharField(
         max_length=255,
         db_index=True,
-        help_text="Full name of the actor"
+        help_text="Full legal or stage name of the person"
     )
+
     bio = models.TextField(
         blank=True,
-        help_text="Short biography of the actor"
+        help_text="Short biography or career summary"
     )
+
     date_of_birth = models.DateField(
         null=True,
         blank=True,
-        help_text="Actor's date of birth"
+        help_text="Date of birth (optional)"
     )
 
     class Meta:
@@ -69,70 +75,101 @@ class Actor(models.Model):
         return self.name
 
 
-class Director(models.Model):
+# ============================================================
+# Movie
+# ============================================================
 
+class Movie(models.Model):
     """
-        Represents a movie director responsible for directing films.
+    Core domain model representing a movie.
 
-        Each movie is associated with a single director, while a director
-        can be associated with multiple movies.
+    Stores basic movie metadata and manages relationships to:
+    - Genres
+    - Actors
+    - Directors
 
-        Relationships:
-            - One-to-Many with Movie
-
-        Performance:
-            - Indexed on `name` for efficient director-based queries.
+    Uses explicit through tables for many-to-many relationships
+    to support future extensibility and optimized querying.
     """
 
-    name = models.CharField(
+    title = models.CharField(
         max_length=255,
         db_index=True,
-        help_text="Full name of the director"
+        help_text="Official title of the movie"
     )
-    bio = models.TextField(
-        blank=True,
-        help_text="Brief biography of the director"
+
+    release_year = models.PositiveIntegerField(
+        db_index=True,
+        help_text="Year in which the movie was released"
+    )
+
+    rating = models.DecimalField(
+        max_digits=3,
+        decimal_places=1,
+        help_text="Average movie rating (e.g., 8.5)"
+    )
+
+    genres = models.ManyToManyField(
+        Genre,
+        through="MovieGenre",
+        related_name="movies",
+        help_text="Genres associated with this movie"
+    )
+
+    actors = models.ManyToManyField(
+        Person,
+        through="MovieActor",
+        related_name="acted_movies",
+        help_text="Actors who appeared in this movie"
+    )
+
+    directors = models.ManyToManyField(
+        Person,
+        through="MovieDirector",
+        related_name="directed_movies",
+        help_text="Directors who directed this movie"
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        help_text="Timestamp when the movie record was created"
     )
 
     class Meta:
-        ordering = ["name"]
+        ordering = ["-release_year", "title"]
         indexes = [
-            models.Index(fields=["name"]),
+            models.Index(fields=["release_year"]),
+            models.Index(fields=["title", "release_year"]),
         ]
 
     def __str__(self):
-        return self.name
+        return self.title
 
 
+# ============================================================
+# Through Tables
+# ============================================================
 
 class MovieGenre(models.Model):
-
     """
-        Junction table linking movies and genres.
+    Junction table connecting movies and genres.
 
-        This explicit through model enables efficient many-to-many
-        relationships between movies and genres while allowing
-        fine-grained indexing for performance optimization.
-
-        Relationships:
-            - ForeignKey to Movie
-            - ForeignKey to Genre
-
-        Constraints:
-            - Unique movie-genre pairs enforced.
-
-        Performance:
-            - Composite index on (genre, movie) for fast genre filtering.
+    This explicit table allows:
+    - Enforcing uniqueness of movie-genre pairs
+    - Efficient filtering by genre
+    - Future extension (e.g., primary genre flag)
     """
+
     movie = models.ForeignKey(
-        "Movie",
+        Movie,
         on_delete=models.CASCADE,
-        help_text="Movie associated with this genre"
+        help_text="Movie associated with the genre"
     )
+
     genre = models.ForeignKey(
         Genre,
         on_delete=models.CASCADE,
-        help_text="Genre associated with this movie"
+        help_text="Genre assigned to the movie"
     )
 
     class Meta:
@@ -141,111 +178,72 @@ class MovieGenre(models.Model):
             models.Index(fields=["genre", "movie"]),
         ]
 
+    def __str__(self):
+        return f"{self.movie} → {self.genre}"
+
 
 class MovieActor(models.Model):
     """
-        Junction table linking movies and actors.
+    Junction table linking actors (persons) to movies.
 
-        Enables a many-to-many relationship between movies and actors
-        with optimized query performance for actor-based filtering.
-
-        Relationships:
-            - ForeignKey to Movie
-            - ForeignKey to Actor
-
-        Constraints:
-            - Prevents duplicate movie-actor associations.
-
-        Performance:
-            - Composite index on (actor, movie) to speed up lookups.
+    Stores actor-specific metadata such as character names.
+    Enables a normalized and extensible actor–movie relationship.
     """
+
     movie = models.ForeignKey(
-        "Movie",
+        Movie,
         on_delete=models.CASCADE,
-        help_text="Movie the actor participated in"
-    )
-    actor = models.ForeignKey(
-        Actor,
-        on_delete=models.CASCADE,
-        help_text="Actor involved in the movie"
+        help_text="Movie in which the actor appeared"
     )
 
-    class Meta:
-        unique_together = ("movie", "actor")
-        indexes = [
-            models.Index(fields=["actor", "movie"]),
-        ]
+    person = models.ForeignKey(
+        Person,
+        on_delete=models.CASCADE,
+        help_text="Person who acted in the movie"
+    )
 
-
-
-class Movie(models.Model):
-    """
-        Represents a movie entity in the platform.
-
-        Stores core metadata such as title, release year, rating, and
-        relationships to director, genres, and actors. This model serves
-        as the central entity of the movie explorer domain.
-
-        Relationships:
-            - ForeignKey to Director (many movies per director)
-            - Many-to-Many with Genre (via MovieGenre)
-            - Many-to-Many with Actor (via MovieActor)
-
-        Performance:
-            - Indexed on title, release_year, and director for fast filtering.
-            - Uses explicit through tables for optimized many-to-many queries.
-    """
-    title = models.CharField(
+    character_name = models.CharField(
         max_length=255,
-        db_index=True,
-        help_text="Title of the movie"
-    )
-
-    release_year = models.PositiveIntegerField(
-        db_index=True,
-        help_text="Year the movie was released"
-    )
-
-    rating = models.DecimalField(
-        max_digits=3,
-        decimal_places=1,
-        help_text="Movie rating (e.g., 8.5)"
-    )
-
-    director = models.ForeignKey(
-        Director,
-        on_delete=models.CASCADE,
-        related_name="movies",
-        db_index=True,
-        help_text="Director of the movie"
-    )
-
-    genres = models.ManyToManyField(
-        Genre,
-        through="MovieGenre",
-        related_name="movies",
-        help_text="Genres associated with the movie"
-    )
-
-    actors = models.ManyToManyField(
-        Actor,
-        through="MovieActor",
-        related_name="movies",
-        help_text="Actors appearing in the movie"
-    )
-
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        help_text="Timestamp when the movie was added"
+        blank=True,
+        help_text="Name of the character played by the actor"
     )
 
     class Meta:
-        ordering = ["-release_year", "title"]
+        unique_together = ("movie", "person")
         indexes = [
-            models.Index(fields=["release_year"]),
-            models.Index(fields=["director"]),
-            models.Index(fields=["title", "release_year"]),
+            models.Index(fields=["person", "movie"]),
         ]
 
     def __str__(self):
-        return self.title
+        return f"{self.person} in {self.movie}"
+
+
+class MovieDirector(models.Model):
+    """
+    Junction table linking directors (persons) to movies.
+
+    Allows support for:
+    - Multiple directors per movie
+    - Directors who also act in other movies
+    """
+
+    movie = models.ForeignKey(
+        Movie,
+        on_delete=models.CASCADE,
+        help_text="Movie directed by the person"
+    )
+
+    person = models.ForeignKey(
+        Person,
+        on_delete=models.CASCADE,
+        help_text="Person who directed the movie"
+    )
+
+    class Meta:
+        unique_together = ("movie", "person")
+        indexes = [
+            models.Index(fields=["person", "movie"]),
+        ]
+
+    def __str__(self):
+        return f"{self.person} → Director of {self.movie}"

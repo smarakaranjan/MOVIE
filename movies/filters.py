@@ -1,77 +1,138 @@
-import django_filters
 from django_filters import rest_framework as filters
-from .models import Movie, Actor, Director, Genre
 
-# ---------------- Movie Filter ----------------
+from .models import (
+    Movie,
+    Person,
+    Genre,
+)
+
+# ============================================================
+# Movie Filter
+# ============================================================
 class MovieFilter(filters.FilterSet):
     """
-    FilterSet for Movies.
+    FilterSet for Movie listings.
 
-    Allows filtering by:
-    - genre name
-    - actor name
-    - director name
-    - release year
+    Supports filtering movies by:
+    - Genre name
+    - Actor name
+    - Director name
+    - Release year
     """
 
-    genre = filters.CharFilter(field_name="genres__name", lookup_expr="iexact")
-    actor = filters.CharFilter(field_name="actors__name", lookup_expr="icontains")
-    director = filters.CharFilter(field_name="director__name", lookup_expr="icontains")
-    release_year = filters.NumberFilter(field_name="release_year")
+    genre = filters.CharFilter(
+        field_name="genres__name",
+        lookup_expr="iexact",
+        help_text="Filter movies by exact genre name (case-insensitive)."
+    )
+
+    actor = filters.CharFilter(
+        field_name="actors__name",
+        lookup_expr="icontains",
+        help_text="Filter movies by actor name (partial match)."
+    )
+
+    director = filters.CharFilter(
+        field_name="directors__name",
+        lookup_expr="icontains",
+        help_text="Filter movies by director name (partial match)."
+    )
+
+    release_year = filters.NumberFilter(
+        field_name="release_year",
+        help_text="Filter movies by release year."
+    )
 
     class Meta:
         model = Movie
         fields = ["genre", "actor", "director", "release_year"]
 
 
-# ---------------- Actor Filter ----------------
+# ============================================================
+# Actors Filte
+# ============================================================
+
 class ActorFilter(filters.FilterSet):
     """
-    FilterSet for Actors.
+    FilterSet for Actor listings.
 
-    Allows filtering by:
-    - movies they acted in
-    - genres of those movies
+    Supports filtering actors by:
+    - Movie title
+    - Movie genre
     """
+    movie = filters.CharFilter(
+        field_name="acted_movies__title", 
+        lookup_expr="icontains"
+    )
 
-    movie = filters.CharFilter(field_name="movies__title", lookup_expr="icontains")
-    genre = filters.CharFilter(field_name="movies__genres__name", lookup_expr="iexact")
+    name = filters.CharFilter(
+        field_name="name",
+        lookup_expr="icontains"
+    )
+
+    genre = filters.CharFilter(
+        field_name="acted_movies__genres__name", 
+        lookup_expr="iexact"
+    )
 
     class Meta:
-        model = Actor
-        fields = ["movie", "genre"]
+        model = Person
+        fields = ["movie", "name", "genre"]
 
-
-# ---------------- Director Filter ----------------
+# ============================================================
+# Directors Filter
+# ============================================================
 class DirectorFilter(filters.FilterSet):
     """
-    FilterSet for Directors.
+    FilterSet for Director listings.
 
-    Allows filtering by:
-    - movies they directed
-    - genres of those movies
+    Supports filtering directors by:
+    - Movie title
+    - Movie genre
     """
 
-    movie = filters.CharFilter(field_name="movies__title", lookup_expr="icontains")
-    genre = filters.CharFilter(field_name="movies__genres__name", lookup_expr="iexact")
+    name = filters.CharFilter(
+        field_name="name",
+        lookup_expr="icontains"
+    )
+
+    movie = filters.CharFilter(
+        field_name="directed_movies__title", 
+        lookup_expr="icontains"
+    )
+
+    genre = filters.CharFilter(
+        field_name="directed_movies__genres__name", 
+        lookup_expr="iexact"
+    )
 
     class Meta:
-        model = Director
-        fields = ["movie", "genre"]
+        model = Person
+        fields = ["movie", "name", "genre"]
 
-
-# ---------------- Genre Filter ----------------
+# ============================================================
+# Genre Filter
+# ============================================================
 class GenreFilter(filters.FilterSet):
     """
-    FilterSet for Genres.
+    FilterSet for Genre listings.
 
-    Allows filtering by:
-    - movies in this genre
-    - actors in those movies
+    Supports filtering genres by:
+    - Movie title
+    - Actor name
     """
 
-    movie = filters.CharFilter(field_name="movies__title", lookup_expr="icontains")
-    actor = filters.CharFilter(field_name="movies__actors__name", lookup_expr="icontains")
+    movie = filters.CharFilter(
+        field_name="movies__title",
+        lookup_expr="icontains",
+        help_text="Filter genres by movie title."
+    )
+
+    actor = filters.CharFilter(
+        field_name="movies__actors__name",
+        lookup_expr="icontains",
+        help_text="Filter genres by actor name."
+    )
 
     class Meta:
         model = Genre

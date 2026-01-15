@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django_filters",
+    "drf_spectacular",
     "movies"
 ]
 
@@ -126,7 +127,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # REST CONFIG
 REST_FRAMEWORK = {
-    "DEFAULT_PAGINATION_CLASS": "movies.pagination.CustomPagination",
+    "DEFAULT_PAGINATION_CLASS": "utils.pagination.CustomPagination",
     "PAGE_SIZE": 10,
     "DEFAULT_FILTER_BACKENDS": [
         "django_filters.rest_framework.DjangoFilterBackend",
