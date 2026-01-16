@@ -12,6 +12,8 @@ A full-stack movie exploration application built with Django REST Framework and 
 - 📱 Responsive design with dark theme
 - ♾️ Infinite scroll for movies
 - 🎨 Beautiful glassmorphism UI
+- ✅ Comprehensive test coverage
+- ✅ Comprehensive test coverage
 
 ## Tech Stack
 
