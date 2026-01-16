@@ -47,7 +47,117 @@ class PersonSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = Person
-        fields = ["id", "name", "bio", "date_of_birth"]
+        fields = ["id", "name", "bio", "date_of_birth", "image_url"]
+
+
+class ActorListSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Actor list view with movies.
+    """
+    movies = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Person
+        fields = ["id", "name", "bio", "date_of_birth", "image_url", "movies"]
+    
+    def get_movies(self, obj):
+        """Get movies where this person acted"""
+        movies = obj.acted_movies.all()[:6]  # Limit to 6 movies for list view
+        return [
+            {
+                "id": movie.id,
+                "title": movie.title,
+                "release_year": movie.release_year,
+                "rating": movie.rating,
+                "image_url": movie.image_url,
+            }
+            for movie in movies
+        ]
+
+
+class DirectorListSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Director list view with movies.
+    """
+    movies = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Person
+        fields = ["id", "name", "bio", "date_of_birth", "image_url", "movies"]
+    
+    def get_movies(self, obj):
+        """Get movies directed by this person"""
+        movies = obj.directed_movies.all()[:6]  # Limit to 6 movies for list view
+        return [
+            {
+                "id": movie.id,
+                "title": movie.title,
+                "release_year": movie.release_year,
+                "rating": movie.rating,
+                "image_url": movie.image_url,
+            }
+            for movie in movies
+        ]
+
+
+class ActorDetailSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Actor detail view with initial movies and pagination info.
+    """
+    movies = serializers.SerializerMethodField()
+    movies_count = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Person
+        fields = ["id", "name", "bio", "date_of_birth", "image_url", "movies", "movies_count"]
+    
+    def get_movies(self, obj):
+        """Get initial movies where this person acted (first 12)"""
+        movies = obj.acted_movies.all().order_by('-release_year')[:12]
+        return [
+            {
+                "id": movie.id,
+                "title": movie.title,
+                "release_year": movie.release_year,
+                "rating": movie.rating,
+                "image_url": movie.image_url,
+            }
+            for movie in movies
+        ]
+    
+    def get_movies_count(self, obj):
+        """Get total count of movies"""
+        return obj.acted_movies.count()
+
+
+class DirectorDetailSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Director detail view with initial movies and pagination info.
+    """
+    movies = serializers.SerializerMethodField()
+    movies_count = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Person
+        fields = ["id", "name", "bio", "date_of_birth", "image_url", "movies", "movies_count"]
+    
+    def get_movies(self, obj):
+        """Get initial movies directed by this person (first 12)"""
+        movies = obj.directed_movies.all().order_by('-release_year')[:12]
+        return [
+            {
+                "id": movie.id,
+                "title": movie.title,
+                "release_year": movie.release_year,
+                "rating": movie.rating,
+                "image_url": movie.image_url,
+            }
+            for movie in movies
+        ]
+    
+    def get_movies_count(self, obj):
+        """Get total count of movies"""
+        return obj.directed_movies.count()
 
 
 # ============================================================
@@ -129,6 +239,7 @@ class MovieSerializer(serializers.ModelSerializer):
             "title",
             "release_year",
             "rating",
+            "image_url",
             "actors_info",
             "director_info",
             "genres_info",

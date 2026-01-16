@@ -43,9 +43,15 @@ class MovieFilter(filters.FilterSet):
         help_text="Filter movies by release year."
     )
 
+    title = filters.CharFilter(
+        field_name="title",
+        lookup_expr="icontains",
+        help_text="Filter movies by title (partial match, case-insensitive)."
+    )
+
     class Meta:
         model = Movie
-        fields = ["genre", "actor", "director", "release_year"]
+        fields = ["genre", "actor", "director", "release_year", "title"]
 
 
 # ============================================================

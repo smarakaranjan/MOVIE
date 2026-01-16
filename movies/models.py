@@ -65,6 +65,12 @@ class Person(models.Model):
         help_text="Date of birth (optional)"
     )
 
+    image_url = models.URLField(
+        max_length=500,
+        blank=True,
+        help_text="URL to the person's profile image"
+    )
+
     class Meta:
         ordering = ["name"]
         indexes = [
@@ -107,6 +113,12 @@ class Movie(models.Model):
         max_digits=3,
         decimal_places=1,
         help_text="Average movie rating (e.g., 8.5)"
+    )
+
+    image_url = models.URLField(
+        max_length=500,
+        blank=True,
+        help_text="URL to the movie poster/image"
     )
 
     genres = models.ManyToManyField(

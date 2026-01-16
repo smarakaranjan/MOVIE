@@ -76,6 +76,7 @@ class MovieViewSet(ModelViewSet):
         "actor",
         "director",
         "release_year",
+        "title",
         "page",
         "page_size",
         "ordering",
@@ -158,6 +159,16 @@ class ActorViewSet(ModelViewSet):
     )
 
     serializer_class = PersonSerializer
+    
+    def get_serializer_class(self):
+        """Use different serializers for list and retrieve actions"""
+        if self.action == 'list':
+            from .serializers import ActorListSerializer
+            return ActorListSerializer
+        elif self.action == 'retrieve':
+            from .serializers import ActorDetailSerializer
+            return ActorDetailSerializer
+        return PersonSerializer
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_class = ActorFilter
     pagination_class = CustomPagination
@@ -238,6 +249,16 @@ class DirectorViewSet(ModelViewSet):
     )
 
     serializer_class = PersonSerializer
+    
+    def get_serializer_class(self):
+        """Use different serializers for list and retrieve actions"""
+        if self.action == 'list':
+            from .serializers import DirectorListSerializer
+            return DirectorListSerializer
+        elif self.action == 'retrieve':
+            from .serializers import DirectorDetailSerializer
+            return DirectorDetailSerializer
+        return PersonSerializer
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_class = DirectorFilter
     pagination_class = CustomPagination
